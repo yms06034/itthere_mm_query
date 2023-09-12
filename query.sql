@@ -139,7 +139,9 @@ GROUP BY r_post_id, r_post_title
 ORDER BY review DESC
 LIMIT 10;
 
-// =======================================
+-- =======================================
+-- =======================================
+-- =======================================
 
 CREATE TABLE error_msg (
     id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
