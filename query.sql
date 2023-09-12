@@ -138,3 +138,115 @@ FROM review
 GROUP BY r_post_id, r_post_title
 ORDER BY review DESC
 LIMIT 10;
+
+// =======================================
+
+CREATE TABLE error_msg (
+    id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    user_id BIGINT NOT NULL,
+    error_message TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES n_c_home_userinfo(id)
+);
+
+ALTER TABLE error_msg ADD `macro_program_num` INT NOT NULL;
+ALTER TABLE error_msg ADD `date_time` datetime NOT NULL;
+
+CREATE TABLE naver_cafe_post (
+	id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+	user_id BIGINT NOT NULL,
+	number_of_cafepost INT NOT NULL,
+	FOREIGN KEY (user_id) REFERENCES n_c_home_userinfo(id)
+);
+
+ALTER TABLE naver_cafe_post ADD `date_time` datetime NOT NULL;
+ALTER TABLE naver_cafe_post ADD `write_number_of_cafepost` int NOT NULL;
+
+CREATE TABLE naver_cafe_reply (
+	id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+	user_id BIGINT NOT NULL,
+	num_per_user INT NOT NULL,
+	timesleep INT NOT NULL,
+	start_date datetime NOT NULL,
+	number_of_cafereply INT NOT NULL,
+	FOREIGN KEY (user_id) REFERENCES n_c_home_userinfo(id)
+);
+ALTER TABLE naver_cafe_reply ADD `real_number_of_cafereply` INT NOT NULL;
+
+CREATE TABLE local_data (
+	id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+	user_id BIGINT NOT NULL,
+	cb_addr1 VARCHAR(255) NOT NULL,
+	cb_addr2 VARCHAR(255) NOT NULL,
+	cb_uptae1 VARCHAR(255) NOT NULL,
+	cb_uptae2 VARCHAR(255) NOT NULL,
+	FOREIGN KEY (user_id) REFERENCES n_c_home_userinfo(id)
+);
+ALTER TABLE local_data ADD `start_date` datetime NOT NULL;
+ALTER TABLE local_data ADD `number_data` INT NOT NULL;
+
+CREATE TABLE naver_blog (
+	id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+	user_id BIGINT NOT NULL,
+	keywords TEXT NOT NULL,
+	number_of_keywords INT NOT NULL,
+	comment TEXT NOT NULL,
+	start_date DATETIME NOT NULL,
+	FOREIGN KEY (user_id) REFERENCES n_c_home_userinfo(id)
+);
+
+
+SELECT * FROM error_msg;
+SELECT * FROM login_log ll;
+
+SELECT * FROM instagram_send_dm_input_data isdid;
+SELECT * FROM naver_cafe_post;
+SELECT * FROM naver_cafe_reply;
+SELECT * FROM local_data;
+SELECT * FROM naver_blog;
+
+-- log drop 
+TRUNCATE TABLE error_msg;
+TRUNCATE TABLE login_log;
+
+TRUNCATE TABLE instagram_send_dm_input_data;
+TRUNCATE TABLE naver_cafe_post;
+TRUNCATE TABLE naver_cafe_reply;
+TRUNCATE TABLE local_data;
+TRUNCATE TABLE naver_blog;
+
+-- Grfana DashBoard Query
+SELECT COUNT(*) as total_number_customers
+FROM n_c_home_userinfo nchu;
+
+SELECT
+	CASE
+		WHEN macro_program_num = 1
+		THEN '네이버 카페 게시글'
+		WHEN macro_program_num = 2
+		THEN '네이버 카페 댓글'
+		WHEN macro_program_num = 3
+		THEN '네이버 블로그 댓글'
+		WHEN macro_program_num = 4
+		THEN '인스타그램 ID 추출'
+		WHEN macro_program_num = 5
+		THEN '인스타그램 DM 추출'
+		WHEN macro_program_num = 6
+		THEN 'Local Data API'
+		ELSE '인스타그램 (통합)'
+	END AS macro_program_name
+	, COUNT(*) as number_deployments
+FROM n_c_home_userinfo nchu
+GROUP BY 1
+ORDER BY 2 DESC;
+
+
+SELECT ll.id, ll.user_id, ll.macro_program_num, ll.login_date_log, ll.login_status
+FROM login_log ll
+WHERE ll.login_status = 'login'
+AND NOT EXISTS (
+    SELECT 1
+    FROM login_log logout_check
+    WHERE logout_check.user_id = ll.user_id
+    AND logout_check.login_date_log > ll.login_date_log
+    AND logout_check.login_status = 'logout'
+);
